@@ -10,6 +10,7 @@ const NAV_CLIENT = [
 ];
 const NAV_ADMIN = [
   { id: "dashboard", label: "Overview" },
+  { id: "admin-users", label: "Users & access" },
   { id: "admin-clients", label: "Clients" },
   { id: "admin-subscriptions", label: "Subscriptions" },
   { id: "tickets", label: "Tickets" },
@@ -18,9 +19,22 @@ const NAV_ADMIN = [
   { id: "services", label: "Services" },
   { id: "admin-activity", label: "Activity" },
 ];
+const NAV_STAFF = [
+  { id: "dashboard", label: "Overview" },
+  { id: "tickets", label: "Tickets" },
+  { id: "devices", label: "Devices" },
+  { id: "monitoring", label: "Monitoring" },
+  { id: "services", label: "Services" },
+];
+
+const NAV_FOR = (role) => {
+  if (role === "super_admin" || role === "admin") return NAV_ADMIN;
+  if (role === "engineer" || role === "support") return NAV_STAFF;
+  return NAV_CLIENT;
+};
 
 export default function PortalShell({ user, view, setView, children, onLogout }) {
-  const nav = user.role === "admin" ? NAV_ADMIN : NAV_CLIENT;
+  const nav = NAV_FOR(user.role);
   return (
     <div className="min-h-screen bg-[#FAFAFC] text-black">
       <aside className="fixed inset-y-0 left-0 w-64 border-r border-zinc-200 bg-white px-5 py-6 flex flex-col">
