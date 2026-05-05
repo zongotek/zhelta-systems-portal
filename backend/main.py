@@ -13,6 +13,7 @@ from routes.services import router as services_router
 from routes.billing import router as billing_router
 from routes.dashboard import router as dashboard_router
 from routes.admin import router as admin_router
+from routes.admin_users import router as admin_users_router
 
 load_dotenv()
 
@@ -42,5 +43,6 @@ async def health():
 
 
 for r in (auth_router, devices_router, tickets_router, monitoring_router,
-          services_router, billing_router, dashboard_router, admin_router):
+          services_router, billing_router, dashboard_router, admin_router,
+          admin_users_router):
     app.include_router(r)
