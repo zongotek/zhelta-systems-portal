@@ -15,6 +15,19 @@ TOKEN_TTL_HOURS = 24 * 7
 _pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+# Role hierarchy. Higher number = more power.
+ROLE_RANK = {"client": 0, "support": 1, "engineer": 2, "admin": 3, "super_admin": 4}
+INTERNAL_ROLES = {"super_admin", "admin", "engineer", "support"}
+ASSIGNABLE_ROLES = ["super_admin", "admin", "engineer", "support", "client"]
+
+
+def can_manage(actor_role: str, target_role: str) -> bool:
+    """Actor can manage target only if strictly higher rank.
+    Super admin manages everyone (including other super admins — but seed protects last one).
+    """
+    return ROLE_RANK.get(actor_role, -1) > ROLE_RANK.get(target_role, -1) or actor_role == "super_admin"
+
+
 def hash_password(p: str) -> str:
     return _pwd.hash(p)
 
@@ -47,10 +60,24 @@ async def current_user(authorization: Optional[str] = Header(None)):
     user = await db.users.find_one({"id": data["sub"]}, {"_id": 0, "password_hash": 0})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    if user.get("is_active") is False:
+        raise HTTPException(status_code=403, detail="Account revoked")
     return user
 
 
 async def require_admin(user=Depends(current_user)):
-    if user.get("role") != "admin":
+    if user.get("role") not in {"super_admin", "admin"}:
         raise HTTPException(status_code=403, detail="Admin only")
+    return user
+
+
+async def require_super_admin(user=Depends(current_user)):
+    if user.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Super admin only")
+    return user
+
+
+async def require_internal(user=Depends(current_user)):
+    if user.get("role") not in INTERNAL_ROLES:
+        raise HTTPException(status_code=403, detail="Internal staff only")
     return user
